@@ -32,15 +32,32 @@ if snr_score > 100.0:
 
 print("SNR Score: ", snr_score)
 
-direction = cm.at[0, 'Direction']
+direction = 1
+#direction = cm.at[0, 'Direction']
 print(direction)
 
-cm_pwr = cm.at[0, 'PWR']
+cm_pwr = 50
+#cm_pwr = cm.at[0, 'PWR']
 pwr_score = 100.0
 target = 0.0
 thresh = 5.0
+
 if(direction == 1):
     target = 45.0
+else:
     diff = target - cm_pwr
-    if(abs(diff) > thresh):
-        pwr_score = 
+
+max = target + thresh
+min = target - thresh
+print(min)
+print(max)
+
+if cm_pwr <= max and cm_pwr >= min:
+    pwr_score = 100.00
+elif cm_pwr < min:
+    pwr_score = (-1.0 / (cm_pwr - min - 1)) * 100.0
+else:
+    pwr_score = (1.0 / (cm_pwr - max + 1)) * 100.0
+
+print("PWR Score: ", pwr_score)
+
