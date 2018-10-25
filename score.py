@@ -12,7 +12,7 @@ raw_data = pd.read_csv(
     "~/Desktop/Billing_and_Nodes_Data/snr3.csv", names=d_cols)
 
 # print(raw_data.head())
-# print(raw_data.describe())
+print(raw_data.describe())
 
 # Enter desired MAC and Timestamp
 mac = '0001A6FF38DF'
@@ -55,8 +55,6 @@ def pwrscore(pwr, direction, thresh, target):
 
     if(direction == 1):
         target = 45.0
-    else:
-        diff = target - cm_pwr
 
     max = target + thresh
     min = target - thresh
@@ -69,5 +67,19 @@ def pwrscore(pwr, direction, thresh, target):
         pwr_score = (1.0 / (pwr - max + 1)) * 100.0
     return pwr_score
 
+# returns a data frame with only records for a given MAC address. Adds scores for
+# SNR and PWR level to data frame.
+
+
+def scorecm(data, mac):
+    cm_data = data[data.MAC == mac]
+    cm_data = cm_data.assign(SNR_Score=snrscore(cm_data.SNR, 40.0))
+    cm_data = cm_data.assign(PWR_Score=pwrscore(
+        cm_data.PWR, cm_data.Direction, 5.0, 0.0))
+    print(cm_data)
+    return cm_data
+
 
 print("PWR Score: ", pwrscore(cm_pwr, direction, 5.0, 0.0))
+
+scorecm(raw_data, mac)
