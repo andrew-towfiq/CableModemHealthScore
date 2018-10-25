@@ -13,51 +13,59 @@ raw_data = pd.read_csv(
 # print(raw_data.describe())
 
 # Enter desired MAC and Timestamp
-def_mac = '0001A6FF38DF'
-def_timestamp = '2018-09-02 00:00:35.0010'
+mac = '0001A6FF38DF'
+timestamp = '2018-09-02 00:00:35.0010'
 
-cm = raw_data[(raw_data.MAC == def_mac) & (
-    raw_data.Timestamp == def_timestamp)]
+cm = raw_data[(raw_data.MAC == mac) & (
+    raw_data.Timestamp == timestamp)]
+
+print("Cable Modem MAC:", mac)
+print("Timestamp: ", timestamp)
+
 cm_snr = cm.at[0, 'SNR']
-print("Cable Modem MAC:", def_mac)
-print("Timestamp: ", def_timestamp)
-print("SNR: ", cm_snr)
+cm_pwr = cm.at[0, 'PWR']
+direction = cm.at[0, 'Direction']
 
-# Threshold of "ideal" snr level.
-max_snr = 40.0
-snr_score = cm_snr / max_snr * 100
+# Returns a score out of 100 given a SNR value and a max SNR thresholdself.
+# Greater the value, the better the score.
 
-if snr_score > 100.0:
-    snr_score = 100.0
 
-print("SNR Score: ", snr_score)
+def snrscore(snr, max_snr):
+    snr_score = cm_snr / max_snr * 100
+    print("SNR: ", snr)
+    if snr_score > 100.0:
+        snr_score = 100.0
+    return snr_score
 
-direction = 1
-#direction = cm.at[0, 'Direction']
-print(direction)
 
-cm_pwr = 50
-#cm_pwr = cm.at[0, 'PWR']
-pwr_score = 100.0
-target = 0.0
-thresh = 5.0
+print("SNR Score: ", snrscore(cm_snr, 40.0))
 
-if(direction == 1):
-    target = 45.0
-else:
-    diff = target - cm_pwr
+# Returns a score out of 100 given a PWR Level, upstream/downstream, a target
+# power level, and a threshold for the difference of that target PWRself.
+# PWR levels that are close to the target and threshold boundaries are higher.
 
-max = target + thresh
-min = target - thresh
-print(min)
-print(max)
 
-if cm_pwr <= max and cm_pwr >= min:
-    pwr_score = 100.00
-elif cm_pwr < min:
-    pwr_score = (-1.0 / (cm_pwr - min - 1)) * 100.0
-else:
-    pwr_score = (1.0 / (cm_pwr - max + 1)) * 100.0
+def pwrscore(pwr, direction, thresh, target):
+    print("PWR :", pwr)
+    pwr_score = 100.0
+    target = 0.0
+    thresh = 5.0
 
-print("PWR Score: ", pwr_score)
+    if(direction == 1):
+        target = 45.0
+    else:
+        diff = target - cm_pwr
 
+    max = target + thresh
+    min = target - thresh
+
+    if pwr <= max and pwr >= min:
+        pwr_score = 100.00
+    elif pwr < min:
+        pwr_score = (-1.0 / (pwr - min - 1)) * 100.0
+    else:
+        pwr_score = (1.0 / (pwr - max + 1)) * 100.0
+    return pwr_score
+
+
+print("PWR Score: ", pwrscore(cm_pwr, direction, 5.0, 0.0))
