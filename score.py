@@ -32,8 +32,8 @@ cm_direction = cm.at[0, 'Direction']
 
 
 def snrscore(snr, max_snr):
-    snr_score = cm_snr / max_snr * 100
-    #print("SNR: ", snr)
+    snr_score = snr / max_snr * 100
+    # print("SNR: ", snr)
     if snr_score > 100.0:
         snr_score = 100.0
     return snr_score
@@ -48,19 +48,22 @@ print("SNR Score: ", snrscore(cm_snr, 40.0))
 
 
 def pwrscore(pwr, direction, thresh, target):
-    if direction == 1:
-        target = 45.0
+    target = getPwrTarget(direction)
 
-    max = target + thresh
-    min = target - thresh
-
-    if pwr <= max and pwr >= min:
-        pwr_score = 100.00
-    elif pwr < min:
-        pwr_score = (-1.0 / (pwr - min - 1)) * 100.0
+    diff = abs(pwr - target)
+    if (diff <= thresh):
+        pwr_score = 100.0
     else:
-        pwr_score = (1.0 / (pwr - max + 1)) * 100.0
+        pwr_score = 100.0 / (diff + 1)
     return pwr_score
+    return pwr_score
+
+
+def getPwrTarget(direction):
+    if direction == 1:
+        return 45.0
+    else:
+        return 0.0
 
 # returns a data frame with only records for a given MAC address. Adds scores for
 # SNR and PWR level to data frame.
@@ -68,12 +71,20 @@ def pwrscore(pwr, direction, thresh, target):
 
 def scorecm(data, mac):
     cm_data = data[data.MAC == mac]
-    cm_data = cm_data.assign(SNR_Score=snrscore(cm_data.SNR, 40.0))
-    cm_data = cm_data.assign(PWR_Score=pwrscore(
-        cm_data.PWR, cm_data.Direction, 5.0, 0.0))
+    cm_data['SNR_Score'] = 0.0
+    cm_data['PWR_Score'] = 0.0
+    #print("cm_data: ", cm_data)
+    #print("cm_data_size: ", len(cm_data))
+    for i in range(len(cm_data.MAC)):
+        #print(i, ":", cm_data.MAC[i], ";", cm_data.SNR[i], ";", cm_data.PWR[i])
+        cm_snrscore = snrscore(cm_data.SNR[i], 40.0)
+        cm_pwrscore = pwrscore(cm_data.PWR[i], cm_data.Direction[i], 5.0, 0.0)
+        cm_data.SNR_Score[i] = cm_snrscore
+        cm_data.PWR_Score[i] = cm_pwrscore
     return cm_data
 
 
+print("CM_PWR: ", cm_pwr, "  cm_direction: ", cm_direction)
 print("PWR Score: ", pwrscore(cm_pwr, cm_direction, 5.0, 0.0))
 
 print(scorecm(raw_data, mac))
