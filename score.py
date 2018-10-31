@@ -14,6 +14,7 @@ print(raw_data.head())
 # print(raw_data.describe())
 
 # Enter desired MAC and Timestamp
+
 mac = '0001A6FF38DF'
 # timestamp = '2018-09-02 00:00:35.0010'
 
@@ -42,7 +43,7 @@ def snrscore(snr, max_snr):
 # print("SNR Score: ", snrscore(cm_snr, 40.0))
 
 # Returns a score out of 100 given a PWR Level, upstream/downstream, a target
-# power level, and a threshold for the difference of that target PWRself.
+# power level, and a threshold for the difference of that target PWR.
 # PWR levels that are close to the target and threshold boundaries are higher.
 
 
@@ -76,8 +77,8 @@ def scorecm(data):
     # print("cm_data: ", cm_data)
     # print("cm_data_size: ", len(cm_data))
     for i in range(len(cm_data.MAC)):
-        # print(i, ":", cm_data.loc[i, 'MAC'], ";",
-              #cm_data.loc[i, 'SNR'], ";", cm_data.loc[i, 'PWR']
+        print(i, ":", cm_data.loc[i, 'MAC'], ";",
+              cm_data.loc[i, 'SNR'], ";", cm_data.loc[i, 'PWR'])
         cm_snrscore = snrscore(cm_data.loc[i, 'SNR'], 40.0)
         cm_pwrscore = pwrscore(
             cm_data.loc[i, 'PWR'], cm_data.loc[i, 'Direction'], 5.0, 0.0)
