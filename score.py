@@ -56,7 +56,6 @@ def pwrscore(pwr, direction, thresh, target):
     else:
         pwr_score = 100.0 / (diff + 1)
     return pwr_score
-    return pwr_score
 
 
 def getPwrTarget(direction):
@@ -77,13 +76,15 @@ def scorecm(data):
     # print("cm_data: ", cm_data)
     # print("cm_data_size: ", len(cm_data))
     for i in range(len(cm_data.MAC)):
-        print(i, ":", cm_data.loc[i, 'MAC'], ";",
-              cm_data.loc[i, 'SNR'], ";", cm_data.loc[i, 'PWR'])
-        cm_snrscore = snrscore(cm_data.loc[i, 'SNR'], 40.0)
-        cm_pwrscore = pwrscore(
-            cm_data.loc[i, 'PWR'], cm_data.loc[i, 'Direction'], 5.0, 0.0)
-        cm_data.loc[i, 'SNR_Score'] = cm_snrscore
-        cm_data.loc[i, 'PWR_Score'] = cm_pwrscore
+        #        print(i, ":", cm_data.loc[i, 'MAC'], ";",
+        #              cm_data.loc[i, 'SNR'], ";", cm_data.loc[i, 'PWR'])
+        #        cm_snrscore = snrscore(cm_data.loc[i, 'SNR'], 40.0)
+        #        cm_pwrscore = pwrscore(
+        #            cm_data.loc[i, 'PWR'], cm_data.loc[i, 'Direction'], 5.0, 0.0)
+        #        cm_data.loc[i, 'SNR_Score'] = cm_snrscore
+        #       cm_data.loc[i, 'PWR_Score'] = cm_pwrscore
+        if (i % 100 == 0):
+            print("i:", i, " MAC: ", cm_data.loc[i, 'MAC'])
     return cm_data
 
 
