@@ -29,31 +29,32 @@ VIEW `v_snr_pl_scores` AS
         `snr_pl_h`.`ifIndex` AS `ifIndex`,
         `snr_pl_h`.`snr` AS `snr`,
         `snr_pl_h`.`pl` AS `pl`,
-        SNR_SCORE(`snr_pl_h`.`snr`, 40) AS `snr_score`,
-        PL_SCORE(`snr_pl_h`.`direction`,
-                `snr_pl_h`.`pl`,
-                0) AS `pl_score`
+        snr_score(`snr_pl_h`.`snr`, 40) AS `snr_score`,
+        pl_score(`snr_pl_h`.`direction`,
+                `snr_pl_h`.`pl`)
+                AS `pl_score`
     FROM
         `snr_pl_h`;
         
-        
-CREATE DEFINER=`andrew`@`%` FUNCTION `SNR_SCORE`(snr float, target float) RETURNS float
-return (100.0*snr/target)
 
-CREATE DEFINER=`andrew`@`%` FUNCTION `pl_target`(direction int) RETURNS float
-return if(direction = 1, 45, 0)
 
-delimiter //
-CREATE DEFINER=`andrew`@`%` FUNCTION `PL_SCORE`(direction int, pl float, threshold float) RETURNS float
+drop function if exists snr_score;
+delimiter // 
+CREATE DEFINER=`andrew`@`%` FUNCTION `snr_score`(snr float, target float) RETURNS float
 begin
-  declare delta float;
-  set delta = abs(pl-pl_target(direction));
-  
-  if (delta < threshold) then
-    return 100.0;
-  else
-    return 100.0 / (delta+1);
-  end if;
-  
-end //
-delimiter ;        
+	if (snr > target) then
+		return(100.0);
+	else
+		return (100.0 * snr/target);
+	end if;
+end
+//
+delimiter ;
+     
+drop function if exists `pl_target`;
+CREATE DEFINER=`andrew`@`%` FUNCTION `pl_target`(direction int) RETURNS float
+return if(direction = 1, 45, 0);
+
+drop function if exists `pl_score`;
+CREATE DEFINER=`andrew`@`%` FUNCTION `pl_score`(direction int, pl float) RETURNS float
+return (100.0 * EXP(-1 * POW((1/6) * (pl - pl_target(direction)), 6)));
