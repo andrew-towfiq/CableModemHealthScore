@@ -17,8 +17,25 @@ def fetchall_mac_neighbors(mac):
         conn = MySQLConnection(**dbconfig)
         cursor = conn.cursor()
         df_ifIndex = fetchall_ifIndex_mac(mac)
+        ls_ifIndex = df_ifIndex['IfIndex'].tolist()
+        ls_ifIndex.pop(0)
+        print(ls_ifIndex)
+        ls_neighbors = []
 
-        query = "SELECT DISTINCT mac FROM v_snr_pl_scores WHERE ifIndex = ''" + interface + "'"
+        for interface in ls_ifIndex:
+            query = "SELECT DISTINCT mac FROM v_snr_pl_scores WHERE ifIndex = '" + str(interface) + \
+                "' "
+            print(query)
+            cursor.execute(query)
+            if_rows = cursor.fetchall()
+            if_df = pd.DataFrame([[ij for ij in i] for i in if_rows])
+            if_df.rename(columns={0: 'IfIndex'}, inplace=True)
+            ls_macs = if_df['IfIndex'].tolist()
+            ls_macs.pop(0)
+            ls_neighbors.extend(ls_macs)
+
+        return list(set(ls_neighbors))
+
     except Error as e:
         print(e)
     finally:
@@ -37,6 +54,7 @@ def fetchall_latest_ifIndex_mac(mac):
         # print(final_query)
         cursor.execute(final_query)
         rows = cursor.fetchall()
+
         for row in rows:
             print(row)
         print('Total Row(s):', cursor.rowcount)
@@ -349,9 +367,9 @@ def plot_df_raw(df):
 if __name__ == '__main__':
     mac = input("Enter a desired MAC address: ")
     # print(mac)
-    # fetchall_mac_neighbors(mac)
-    interface = input(
-        "Enter a desired Interface: ")
+    print(fetchall_mac_neighbors(mac))
+    # interface = input(
+    # "Enter a desired Interface: ")
     # fetchall_ifIndex_scores(mac, interface)
     # fetchall_latest_ifIndex_mac(mac)
-    plot_ifIndex_mac(mac, interface)
+    #plot_ifIndex_mac(mac, interface)
