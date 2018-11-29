@@ -11,9 +11,47 @@ import pandas as pd
 import datetime as dt
 
 
-# This funciton returns a table from Mysql of all the interfaces (ifIndexes)
-# for a given MAC address from a cable modem.
+def fetchall_mac_neighbors(mac):
+    try:
+        dbconfig = read_db_config()
+        conn = MySQLConnection(**dbconfig)
+        cursor = conn.cursor()
+        df_ifIndex = fetchall_ifIndex_mac(mac)
 
+        query = "SELECT DISTINCT mac FROM v_snr_pl_scores WHERE ifIndex = ''" + interface + "'"
+    except Error as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def fetchall_latest_ifIndex_mac(mac):
+    try:
+        dbconfig = read_db_config()
+        conn = MySQLConnection(**dbconfig)
+        cursor = conn.cursor()
+        begin_query = "select id, ts, mac, ifIndex, snr, pl, snr_score, pl_score FROM (select max(id) as id from snr_pl_h where mac='"
+        end_query = "' group by ifIndex) as A JOIN v_snr_pl_scores using (id)"
+        final_query = begin_query + mac + end_query
+        # print(final_query)
+        cursor.execute(final_query)
+        rows = cursor.fetchall()
+        for row in rows:
+            print(row)
+        print('Total Row(s):', cursor.rowcount)
+        return(rows)
+
+    except Error as e:
+        print(e)
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# This funciton returns a table from Mysql of all the interfaces (ifIndexes)
+# for a given MAC address from a cable modem. returns DataFrame
 
 def fetchall_ifIndex_mac(mac):
     try:
@@ -26,10 +64,9 @@ def fetchall_ifIndex_mac(mac):
         # print(final_query)
         cursor.execute(final_query)
         rows = cursor.fetchall()
-        for row in rows:
-            print(row)
-        print('Total Row(s):', cursor.rowcount)
-        return(rows)
+        df = pd.DataFrame([[ij for ij in i] for i in rows])
+        df.rename(columns={0: 'IfIndex'}, inplace=True)
+        return(df)
 
     except Error as e:
         print(e)
@@ -68,7 +105,7 @@ def fetchall_ifIndex_scores(mac, interface):
 # plot scores or values for a given mac address and one interface it is connected to
 
 
-def plot_ifIndex_mac(mac, interface, ans):
+def plot_ifIndex_mac(mac, interface):
     try:
         # Connect to MySQLdb
         dbconfig = read_db_config()
@@ -88,7 +125,7 @@ def plot_ifIndex_mac(mac, interface, ans):
         df.rename(columns={0: 'Timestamp', 1: 'MAC_Address',
                            2: 'IfIndex', 3: 'SNR_Score', 4: 'PL_Score', 5: 'SNR', 6: 'PL', 7: 'Direction'}, inplace=True)
         df.Timestamp = pd.to_numeric(df.Timestamp)
-
+        ans = input("Do you wish to plot scores or values? (s/v): ")
         if ans == 's':
             plot_df_scores(df)
         elif ans == 'v':
@@ -133,12 +170,12 @@ def plot_df_scores(df):
                     'x': df_up.Timestamp,
                     'y': df_up.SNR_Score,
                     'mode': 'markers',
-                    'name': 'SNR Score Upstream'},
+                    'name': 'SNR Score'},
                 {
                     'x': df_up.Timestamp,
                     'y': df_up.PL_Score,
                     'mode': 'markers',
-                    'name': 'PL Score Upstream'},
+                    'name': 'PL Score'},
                 {
                     'x': xi,
                     'y': line_snr_score,
@@ -179,12 +216,12 @@ def plot_df_scores(df):
                     'x': df_down.Timestamp,
                     'y': df_down.SNR_Score,
                     'mode': 'markers',
-                    'name': 'SNR Score Upstream'},
+                    'name': 'SNR Score'},
                 {
                     'x': df_down.Timestamp,
                     'y': df_down.PL_Score,
                     'mode': 'markers',
-                    'name': 'PL Score Upstream'},
+                    'name': 'PL Score'},
                 {
                     'x': xi,
                     'y': line_snr_score,
@@ -282,12 +319,12 @@ def plot_df_raw(df):
                     'x': df_down.Timestamp,
                     'y': df_down.SNR,
                     'mode': 'markers',
-                    'name': 'SNR Upstream'},
+                    'name': 'SNR'},
                 {
                     'x': df_down.Timestamp,
                     'y': df_down.PL,
                     'mode': 'markers',
-                    'name': 'PL Upstream'},
+                    'name': 'PL'},
                 {
                     'x': xi,
                     'y': line_snr,
@@ -312,9 +349,9 @@ def plot_df_raw(df):
 if __name__ == '__main__':
     mac = input("Enter a desired MAC address: ")
     # print(mac)
-    # fetchall_ifIndex_mac(mac)
+    # fetchall_mac_neighbors(mac)
     interface = input(
         "Enter a desired Interface: ")
     # fetchall_ifIndex_scores(mac, interface)
-    ans = input("Do you wish to plot scores or values? (s/v): ")
-    plot_ifIndex_mac(mac, interface, ans)
+    # fetchall_latest_ifIndex_mac(mac)
+    plot_ifIndex_mac(mac, interface)
