@@ -5,10 +5,36 @@ import MySQLdb
 
 import plotly.plotly as py
 import plotly.graph_objs as go
-from numpy import arange, array, ones
+import numpy as np
 from scipy import stats
 import pandas as pd
 import datetime as dt
+
+
+def score_each_modem():
+    try:
+        dbconfig = read_db_config()
+        conn = MySQLConnection(**dbconfig)
+        cursor = conn.cursor()
+        unq_mac_query = "SELECT mac FROM v_snr_pl_scores GROUP BY mac"
+        cursor.execute(unq_mac_query)
+        rows = cursor.fetchall()
+        df_rows = pd.DataFrame([[ij for ij in i] for i in rows])
+        df_rows.rename(
+            columns={0: 'MAC'}, inplace=True)
+        df_rows['Avg_SNR_Score'] = 0.0
+        df_rows['Avg_PL_Score'] = 0.0
+        print(df_rows)
+        print('Total Row(s):', cursor.rowcount)
+    except Error as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# given a mac address, this function retrieves all other mac addresses that share
+# the same interfaces as the mac passed to this function.
 
 
 def fetchall_mac_neighbors(mac):
@@ -208,7 +234,8 @@ def plot_df_scores(df):
             'layout': {
                 'title': plot_name,
                 'xaxis': {'title': 'Timestamp'},
-                'yaxis': {'title': 'Score'}
+                'yaxis': {'title': 'Score',
+                          'range': [0.0, 100.0]}
             }
         }
 
@@ -254,7 +281,8 @@ def plot_df_scores(df):
             'layout': {
                 'title': plot_name,
                 'xaxis': {'title': 'Timestamp'},
-                'yaxis': {'title': 'Score'}
+                'yaxis': {'title': 'Score',
+                          'range': [0.0, 100.0]}
             }
         }
 
@@ -367,9 +395,10 @@ def plot_df_raw(df):
 if __name__ == '__main__':
     mac = input("Enter a desired MAC address: ")
     # print(mac)
-    print(fetchall_mac_neighbors(mac))
-    # interface = input(
-    # "Enter a desired Interface: ")
-    # fetchall_ifIndex_scores(mac, interface)
+    # print(fetchall_mac_neighbors(mac))
+    interface = input(
+        "Enter a desired Interface: ")
+    #fetchall_ifIndex_scores(mac, interface)
     # fetchall_latest_ifIndex_mac(mac)
-    #plot_ifIndex_mac(mac, interface)
+    plot_ifIndex_mac(mac, interface)
+    # score_each_modem()

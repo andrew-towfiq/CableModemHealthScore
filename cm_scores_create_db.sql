@@ -41,13 +41,7 @@ VIEW `v_snr_pl_scores` AS
 drop function if exists snr_score;
 delimiter // 
 CREATE DEFINER=`andrew`@`%` FUNCTION `snr_score`(snr float, target float) RETURNS float
-begin
-	if (snr > target) then
-		return(100.0);
-	else
-		return (100.0 * snr/target);
-	end if;
-end
+return(100.0 * 1 / (1 + EXP(-1 * (snr - (target - 7)))))
 //
 delimiter ;
      
