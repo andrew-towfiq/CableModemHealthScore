@@ -10,31 +10,10 @@ from scipy import stats
 import pandas as pd
 import datetime as dt
 
-
-def score_each_modem():
-    try:
-        dbconfig = read_db_config()
-        conn = MySQLConnection(**dbconfig)
-        cursor = conn.cursor()
-        unq_mac_query = "SELECT mac FROM v_snr_pl_scores GROUP BY mac"
-        cursor.execute(unq_mac_query)
-        rows = cursor.fetchall()
-        df_rows = pd.DataFrame([[ij for ij in i] for i in rows])
-        df_rows.rename(
-            columns={0: 'MAC'}, inplace=True)
-        df_rows['Avg_SNR_Score'] = 0.0
-        df_rows['Avg_PL_Score'] = 0.0
-        print(df_rows)
-        print('Total Row(s):', cursor.rowcount)
-    except Error as e:
-        print(e)
-    finally:
-        cursor.close()
-        conn.close()
-
-
 # given a mac address, this function retrieves all other mac addresses that share
 # the same interfaces as the mac passed to this function.
+
+
 def fetchall_mac_neighbors(mac):
     try:
         dbconfig = read_db_config()
@@ -164,7 +143,7 @@ def plot_ifIndex_mac(mac, interface):
         df = pd.DataFrame([[ij for ij in i] for i in rows])
         df.rename(columns={0: 'Timestamp', 1: 'MAC_Address',
                            2: 'IfIndex', 3: 'SNR_Score', 4: 'PL_Score', 5: 'SNR', 6: 'PL', 7: 'Direction'}, inplace=True)
-        df.Timestamp = pd.to_numeric(df.Timestamp)
+        df['Timestamp_S'] = pd.to_numeric(df.Timestamp)
         ans = input("Do you wish to plot scores, values, or both? (s/v/b): ")
         if ans == 's':
             plot_df_scores(df)
@@ -191,7 +170,7 @@ def plot_df_both(df):
         print("df is empty")
     else:
         plot_name = 'CM_' + mac + '_IF_' + interface + '_values_scores'
-        xi = df.Timestamp
+        xi = df.Timestamp_S
         y_snr_score = df.SNR_Score
         y_snr = df.SNR
         y_pl_score = df.PL_Score
@@ -240,23 +219,23 @@ def plot_df_both(df):
                     'yaxis': 'y2'},
 
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_snr_score,
                     'mode': 'lines',
                     'name': 'SNR Score Fit'},
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_pl_score,
                     'mode': 'lines',
                     'name': 'PL Score Fit'},
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_snr,
                     'mode': 'lines',
                     'name': 'SNR Fit',
                     'yaxis': 'y2'},
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_pl,
                     'mode': 'lines',
                     'name': 'PL Fit',
@@ -286,7 +265,7 @@ def plot_df_scores(df):
 
     else:
         plot_name = 'CM_' + mac + '_IF_' + interface + '_scores'
-        xi = df_up.Timestamp
+        xi = df_up.Timestamp_S
         y_snr_score = df.SNR_Score
         y_pl_score = df.PL_Score
 
@@ -311,12 +290,12 @@ def plot_df_scores(df):
                     'mode': 'markers',
                     'name': 'PL Score'},
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_snr_score,
                     'mode': 'lines',
                     'name': 'SNR Score Fit'},
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_pl_score,
                     'mode': 'lines',
                     'name': 'PL Score Fit'}
@@ -366,12 +345,12 @@ def plot_df_raw(df):
                     'mode': 'markers',
                     'name': 'PL Upstream'},
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_snr,
                     'mode': 'lines',
                     'name': 'SNR Fit'},
                 {
-                    'x': xi,
+                    'x': df.Timestamp,
                     'y': line_pl,
                     'mode': 'lines',
                     'name': 'PL Fit'}
