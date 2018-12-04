@@ -11,7 +11,8 @@ import pandas as pd
 import datetime as dt
 
 # given a mac address, this function retrieves all other mac addresses that share
-# the same interfaces as the mac passed to this function.
+# the same interfaces as the mac passed to this function. returns dictionary
+# of interfaces as keys, and list of macs as values.
 
 
 def fetchall_mac_neighbors(mac):
@@ -19,26 +20,17 @@ def fetchall_mac_neighbors(mac):
         dbconfig = read_db_config()
         conn = MySQLConnection(**dbconfig)
         cursor = conn.cursor()
-        df_ifIndex = fetchall_ifIndex_mac(mac)
-        ls_ifIndex = df_ifIndex['IfIndex'].tolist()
-        ls_ifIndex.pop(0)
-        print(ls_ifIndex)
-        ls_neighbors = []
+        arr_ifIndex = fetchall_ifIndex_mac(mac)
+        dict_neighbors = {}
+        for interface in arr_ifIndex:
+            int_if = int(interface)
+            query_mac = "SELECT mac FROM snr_pl_c WHERE ifIndex = '" + \
+                str(int_if) + "' group by MAC"
+            cursor.execute(query_mac)
+            macs = cursor.fetchall()
+            dict_neighbors[int_if] = macs
 
-        for interface in ls_ifIndex:
-            query = "SELECT DISTINCT mac FROM v_snr_pl_scores WHERE ifIndex = '" + str(interface) + \
-                "' "
-            print(query)
-            cursor.execute(query)
-            if_rows = cursor.fetchall()
-            if_df = pd.DataFrame([[ij for ij in i] for i in if_rows])
-            if_df.rename(columns={0: 'IfIndex'}, inplace=True)
-            ls_macs = if_df['IfIndex'].tolist()
-            ls_macs.pop(0)
-            ls_neighbors.extend(ls_macs)
-
-        return list(set(ls_neighbors))
-
+        return(dict_neighbors)
     except Error as e:
         print(e)
     finally:
@@ -70,9 +62,25 @@ def fetchall_latest_ifIndex_mac(mac):
         cursor.close()
         conn.close()
 
+# this function fetches all mac addresses using a given interface in the database
+# returns an array
+
+
+def fetchall_mac_ifIndex(interface):
+    try:
+        dbconfig = read_db_config()
+        conn = MySQLConnection(**dbconfig)
+        cursor = conn.cursor()
+    except Error as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
 
 # This funciton returns a table from Mysql of all the interfaces (ifIndexes)
-# for a given MAC address from a cable modem. returns DataFrame
+# for a given MAC address from a cable modem. returns numpy array
+
+
 def fetchall_ifIndex_mac(mac):
     try:
         dbconfig = read_db_config()
@@ -86,7 +94,7 @@ def fetchall_ifIndex_mac(mac):
         rows = cursor.fetchall()
         df = pd.DataFrame([[ij for ij in i] for i in rows])
         df.rename(columns={0: 'IfIndex'}, inplace=True)
-        return(df)
+        return(df.values)
 
     except Error as e:
         print(e)
@@ -365,12 +373,14 @@ def plot_df_raw(df):
 
 
 if __name__ == '__main__':
+
     mac = input("Enter a desired MAC address: ")
+
     # print(mac)
-    # print(fetchall_mac_neighbors(mac))
-    interface = input(
-        "Enter a desired Interface: ")
-    #fetchall_ifIndex_scores(mac, interface)
+    fetchall_mac_neighbors(mac)
+    # interface = input(
+    #    "Enter a desired Interface: ")
+    # fetchall_ifIndex_scores(mac, interface)
     # fetchall_latest_ifIndex_mac(mac)
-    plot_ifIndex_mac(mac, interface)
+    #plot_ifIndex_mac(mac, interface)
     # score_each_modem()
