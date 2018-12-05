@@ -375,12 +375,8 @@ def plot_df_raw(df):
 if __name__ == '__main__':
 
     mac = input("Enter a desired MAC address: ")
-
-    # print(mac)
-    fetchall_mac_neighbors(mac)
-    # interface = input(
-    #    "Enter a desired Interface: ")
+    interface = input(
+        "Enter a desired Interface: ")
     # fetchall_ifIndex_scores(mac, interface)
     # fetchall_latest_ifIndex_mac(mac)
-    #plot_ifIndex_mac(mac, interface)
-    # score_each_modem()
+    plot_ifIndex_mac(mac, interface)
