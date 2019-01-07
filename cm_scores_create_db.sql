@@ -35,6 +35,27 @@ VIEW `v_c_snr_pl_scores` AS
     FROM
         `snr_pl_c`;
 
+-- drop view if exists v_latest_id;
+CREATE ALGORITHM=MERGE 
+DEFINER=`shony`@`%` 
+SQL SECURITY DEFINER VIEW `v_latest_id` AS 
+SELECT
+	`a`.`id` AS `id`,
+    `a`.`ifIndex` AS `ifIndex`,
+    `a`.`mac` AS `mac`,
+    `b`.`direction` AS `direction` 
+		FROM(
+				(
+					(SELECT MAX(`cm_scores`.`snr_pl_c`.`id`) AS `id`,
+						`cm_scores`.`snr_pl_c`.`ifIndex` AS `ifIndex`,
+						`cm_scores`.`snr_pl_c`.`mac` AS `mac` 
+							FROM `cm_scores`.`snr_pl_c` 
+							GROUP BY `cm_scores`.`snr_pl_c`.`mac`,
+						`cm_scores`.`snr_pl_c`.`ifIndex`
+					)
+				) `a` JOIN `cm_scores`.`snr_pl_c` `b` on ((`a`.`id` = `b`.`id`))
+			);
+        
 -- drop table latest_mac_if_poll;
 CREATE TABLE latest_mac_if_poll AS
 	(SELECT 
