@@ -8,7 +8,6 @@ import plotly.graph_objs as go
 import numpy as np
 from scipy import stats
 import pandas as pd
-import datetime as dt
 
 # given a mac address, this function retrieves all other mac addresses that share
 # the same interfaces as the mac passed to this function. returns dictionary
@@ -372,11 +371,43 @@ def plot_df_raw(df):
         url = py.plot(fig, filename=plot_name)
 
 
-if __name__ == '__main__':
+def health_score_hist():
+    try:
+        dbconfig = read_db_config()
+        conn = MySQLConnection(**dbconfig)
+        cursor = conn.cursor()
+        select_query = "SELECT avg_log_health, w_avg_log_health, avg_stddev_health, w_avg_stddev_health from cm_health_scores"
+        cursor.execute(select_query)
+        rows = cursor.fetchall()
+        df = pd.DataFrame([[ij for ij in i] for i in rows])
+        df.rename(columns={0: 'avg_log_health', 1: 'w_avg_log_health',
+                           2: 'avg_stddev_health', 3: 'w_avg_stddev_health'}, inplace=True)
+        a_log = df['avg_log_health'].values
+        w_log = df['w_avg_log_health'].values
+        a_std = df['avg_stddev_health'].values
+        w_std = df['w_avg_stddev_health'].values
 
-    mac = input("Enter a desired MAC address: ")
-    interface = input(
-        "Enter a desired Interface: ")
-    # fetchall_ifIndex_scores(mac, interface)
-    # fetchall_latest_ifIndex_mac(mac)
-    plot_ifIndex_mac(mac, interface)
+        trace1 = go.Histogram(
+            x=w_log,
+            nbinsx=100
+        )
+
+        data = [trace1]
+        layout = go.Layout(barmode='overlay')
+        fig = go.Figure(data=data, layout=layout)
+        py.iplot(fig, filename='Weighted Average Log Health Score Histogram')
+    except Error as e:
+        print(e)
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+if __name__ == '__main__':
+    #mac = input("Enter a desired MAC address: ")
+    # interface = input(
+    #    "Enter a desired Interface: ")
+    # fetchall_mac_neighbors(mac)
+    #plot_ifIndex_mac(mac, interface)
+    health_score_hist()
